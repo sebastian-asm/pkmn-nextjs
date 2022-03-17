@@ -112,25 +112,44 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
   );
 };
 
+// indicando todos los path que hay disponible en el momento de build
+// static path siempre necesita static props
 export const getStaticPaths: GetStaticPaths = async () => {
   const pkmn151 = [...Array(151)].map((v, i) => `${i + 1}`);
 
   return {
     // el id del path es el nombre del archivo [id]
     paths: pkmn151.map((id) => ({ params: { id } })),
-    // si el path no existe manda 404
-    fallback: false,
+    // fallback: false, // si el path no existe manda 404
+    // blocking es lo que nos permite implementar ISG
+    fallback: 'blocking',
   };
 };
 
 // una vez que se ejecuta static paths pasa a static props
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
+  const pokemon = await getPokemonInfo(id);
+
+  // incremental static generation (ISG)
+  // si se recibe null por parte de la funcion, se entiende que el pkmn no existe
+  // en ese caso volvemos al usuario al home
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false, // se indica si es una redireccion permanente o no
+      },
+    };
+  }
 
   return {
     props: {
-      pokemon: await getPokemonInfo(id),
+      pokemon,
     },
+    // incremental static regeneration (ISR): actualizar continuamente la pagina segun el tiempo indicado
+    // recibe el valor en segundos
+    revalidate: 86400, // 24 horas
   };
 };
 
