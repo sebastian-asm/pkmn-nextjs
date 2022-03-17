@@ -13,10 +13,10 @@ export const PokemonCard: FC<Props> = ({ pokemon }) => {
   const { push } = useRouter();
   const { id, name, img } = pokemon;
 
-  const handleClick = () => push(`/pokemon/${id}`);
+  const handleClick = () => push(`/name/${name}`);
 
   return (
-    <Grid key={id} xs={12} sm={6} md={4}>
+    <Grid key={id} xs={12} sm={6} md={4} lg={3}>
       <Card onClick={handleClick} hoverable clickable>
         <Card.Body>
           <Card.Image src={img} width="100%" height={140} />

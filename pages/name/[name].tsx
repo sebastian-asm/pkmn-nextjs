@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { GetStaticProps, GetStaticPaths, NextPage } from 'next';
+import { NextPage, GetStaticPaths, GetStaticProps } from 'next';
 
 import { Button, Card, Container, Grid, Image, Text } from '@nextui-org/react';
 import confetti from 'canvas-confetti';
 
+import { pokeApi } from '../../api';
 import { Layout } from '../../components/layouts';
-import { Pokemon } from '../../interfaces';
+import { Pokemon, PokemonListResponse } from '../../interfaces';
 import { toggleFavorites, inFavorites } from '../../utils/localStorage';
 import { getPokemonInfo } from '../../utils';
 
@@ -13,11 +14,9 @@ interface Props {
   pokemon: Pokemon;
 }
 
-const PokemonPage: NextPage<Props> = ({ pokemon }) => {
+const PokemonByName: NextPage<Props> = ({ pokemon }) => {
   const [isInFavorites, setIsInFavorites] = useState(false);
 
-  // useEffect para tener disponible el localStorage, en vista que Next primero ejecutar
-  // del lado del servidor y despues del lado del cliente y asi tener el object window
   useEffect(() => setIsInFavorites(inFavorites(pokemon.id)), [
     setIsInFavorites,
     pokemon,
@@ -113,25 +112,22 @@ const PokemonPage: NextPage<Props> = ({ pokemon }) => {
 };
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const pkmn151 = [...Array(151)].map((v, i) => `${i + 1}`);
+  const { data } = await pokeApi.get<PokemonListResponse>('/pokemon?limit=151');
 
   return {
-    // el id del path es el nombre del archivo [id]
-    paths: pkmn151.map((id) => ({ params: { id } })),
-    // si el path no existe manda 404
+    paths: data.results.map((pkmn: any) => ({ params: { name: pkmn.name } })),
     fallback: false,
   };
 };
 
-// una vez que se ejecuta static paths pasa a static props
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const { id } = params as { id: string };
+  const { name } = params as { name: string };
 
   return {
     props: {
-      pokemon: await getPokemonInfo(id),
+      pokemon: await getPokemonInfo(name),
     },
   };
 };
 
-export default PokemonPage;
+export default PokemonByName;
